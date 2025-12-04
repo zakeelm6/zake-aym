@@ -49,11 +49,7 @@ deploy:
   stage: deploy
   image: curlimages/curl:latest
   script:
-    - echo "Déploiement du WAR vers Tomcat..."
-    - |
-      curl -u "admin:tomcat" \
-        --upload-file target/demo-1.0.0.war \
-        "http://192.168.60.180:8080/manager/text/deploy?path=/demo&update=true"
+    - echo "Déploiement du war simulé !"
   only:
     - main
 
