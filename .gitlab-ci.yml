@@ -62,5 +62,8 @@ deploy:
   stage: deploy
   image: curlimages/curl:latest
   script:
-    - echo "Déploiement du war sur Tomcat..."
-    - curl -u "$TOMCAT_USER:$TOMCAT_PASS" -T target/demo-0.0.1-SNAPSHOT.war "http://$TOMCAT_IP:8080/manager/text/deploy?path=/demo&update=true"
+    - echo "Déploiement du WAR sur Tomcat via ngrok..."
+    - curl -u "$TOMCAT_USER:$TOMCAT_PASS" -T target/demo-0.0.1-SNAPSHOT.war "https://unswabbed-brenton-unregained.ngrok-free.dev/manager/text/deploy?path=/demo&update=true"
+  allow_failure: false
+  after_script:
+    - echo "Déploiement terminé"
