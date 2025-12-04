@@ -50,6 +50,3 @@ deploy:
   image: curlimages/curl:latest
   script:
     - echo "Déploiement du war simulé !"
-  only:
-    - main
-
