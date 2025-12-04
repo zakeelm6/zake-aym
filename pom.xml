@@ -6,7 +6,7 @@
 	<groupId>com.example</groupId>
 	<artifactId>demo</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>jar</packaging>
+	<packaging>war</packaging>
 
 	<name>demo</name>
 	<description>Demo project for Spring Boot</description>
@@ -50,6 +50,13 @@
 			</plugin>
 		</plugins>
 	</build>
+	<distributionManagement>
+           <repository>
+            <id>internal.repo</id>
+            <url>file:///C:/maven-repo/</url>
+           </repository>
+        </distributionManagement>
+
 
 
 </project>
