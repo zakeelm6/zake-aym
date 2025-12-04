@@ -63,4 +63,4 @@ deploy:
   image: curlimages/curl:latest
   script:
     - echo "Déploiement du war sur Tomcat..."
-    - curl -u "$TOMCAT_USER:$TOMCAT_PASS" -T target/demo-0.0.1-SNAPSHOT.war "http://$TOMCAT_IP:8080/manager/text/deploy?path=/demo&update=true"
+    - curl -u "$TOMCAT_USER:$TOMCAT_PASS" -T target/demo-0.0.1-SNAPSHOT.war "http://$192.168.60.180:8080/manager/text/deploy?path=/demo&update=true"
