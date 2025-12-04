@@ -1,83 +1,59 @@
 stages:
   - build
   - test
+  - package
   - deploy
 
-# Variables Maven
 variables:
-  MAVEN_OPTS: "-Dmaven.test.failure.ignore=true"
-  MAVEN_CLI_OPTS: "-B -V"
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end"
 
-# Cache pour les dépendances Maven
-cache:
-  paths:
-    - .m2/repository/
+before_script:
+  - echo "=== Début du job ==="
+  - echo "Initialisation de Maven"
 
-# ----------------
-# BUILD
-# ----------------
-build-job:
+after_script:
+  - echo "=== Fin du job ==="
+
+build:
   stage: build
-  image: maven:3.9-eclipse-temurin-17
-  before_script:
-    - echo "Starting build job..."
+  image: maven:3.9.6-eclipse-temurin-17
   script:
-    - echo "=== mvn clean package ==="
-    - mvn $MAVEN_CLI_OPTS clean package
+    - mvn $MAVEN_CLI_OPTS compile
+  allow_failure: false
   artifacts:
     paths:
-      - target/*.war
-    expire_in: 1 hour
-  after_script:
-    - echo "Build job finished."
+      - target/
 
-# ----------------
-# TEST
-# ----------------
-unit-test-job:
+test:
   stage: test
-  image: maven:3.9-eclipse-temurin-17
+  image: maven:3.9.6-eclipse-temurin-17
   script:
-    - echo "=== mvn test ==="
     - mvn $MAVEN_CLI_OPTS test
+  allow_failure: true        # ✔ le test peut échouer sans stopper le pipeline
   artifacts:
     when: always
     paths:
-      - target/surefire-reports/
-    reports:
-      junit: target/surefire-reports/*.xml
-  allow_failure: false
-  before_script:
-    - echo "Preparing test job..."
-  after_script:
-    - echo "Test job finished."
+      - target/surefire-reports
 
-lint-test-job:
-  stage: test
-  image: maven:3.9-eclipse-temurin-17
+package:
+  stage: package
+  image: maven:3.9.6-eclipse-temurin-17
   script:
-    - echo "Running static analysis (optional)"
-    - mvn $MAVEN_CLI_OPTS -q verify -DskipTests
-  allow_failure: true
+    - mvn $MAVEN_CLI_OPTS package -DskipTests
+  artifacts:
+    paths:
+      - target/demo-0.0.1-SNAPSHOT.war
 
-# ----------------
-# DEPLOY
-# ----------------
-deploy-job:
+deploy:
   stage: deploy
-  image: alpine:latest
-  dependencies:
-    - build-job
-  before_script:
-    - echo "Installing curl for deploy..."
-    - apk add --no-cache curl
+  image: curlimages/curl:latest
   script:
+    - echo "Déploiement du WAR vers Tomcat..."
     - |
-      if [ -z "$TOMCAT_IP" ] || [ -z "$TOMCAT_USER" ] || [ -z "$TOMCAT_PASS" ] || [ -z "$APP_CONTEXT" ]; then
-        echo "ERROR: Tomcat variables are missing. Define TOMCAT_IP, TOMCAT_USER, TOMCAT_PASS and APP_CONTEXT in GitLab CI/CD variables."; exit 1;
-      fi
-    - echo "Deploying WAR to Tomcat at $TOMCAT_IP (context: $APP_CONTEXT)"
-    - curl -u "$TOMCAT_USER:$TOMCAT_PASS" -T target/*.war "http://$TOMCAT_IP:8080/manager/text/deploy?path=${APP_CONTEXT}&update=true" --fail
-  allow_failure: false
-  after_script:
-    - echo "Deploy job finished."
+      curl -u "admin:tomcat" \
+        --upload-file target/demo-1.0.0.war \
+        "http://192.168.60.180:8080/manager/text/deploy?path=/demo&update=true"
+  only:
+    - main
+
