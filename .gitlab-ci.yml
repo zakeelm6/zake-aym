@@ -8,6 +8,7 @@ variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end"
 
+# Cache Maven pour accélérer les builds
 cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
@@ -20,6 +21,7 @@ before_script:
 after_script:
   - echo "=== Fin du job ==="
 
+# Job build
 build:
   stage: build
   image: maven:3.9.6-eclipse-temurin-17
@@ -30,6 +32,7 @@ build:
     paths:
       - target/
 
+# Job test avec rapport JUnit
 test:
   stage: test
   image: maven:3.9.6-eclipse-temurin-17
@@ -44,7 +47,7 @@ test:
     paths:
       - target/surefire-reports
 
-
+# Job package
 package:
   stage: package
   image: maven:3.9.6-eclipse-temurin-17
@@ -54,6 +57,7 @@ package:
     paths:
       - target/demo-0.0.1-SNAPSHOT.war
 
+# Job deploy sur Tomcat
 deploy:
   stage: deploy
   image: curlimages/curl:latest
