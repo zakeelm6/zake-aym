@@ -1,6 +1,7 @@
 stages:
   - build
   - test
+  - security-sast
   - package
   - deploy
 
@@ -8,7 +9,6 @@ variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end"
 
-# Cache Maven pour accélérer les builds
 cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
@@ -16,29 +16,31 @@ cache:
 
 before_script:
   - echo "=== Début du job ==="
-  - echo "Initialisation de Maven"
 
 after_script:
   - echo "=== Fin du job ==="
 
-# Job build
+# =========================
+# 🔨 BUILD
+# =========================
 build:
   stage: build
   image: maven:3.9.6-eclipse-temurin-17
   script:
     - mvn $MAVEN_CLI_OPTS compile
-  allow_failure: false
   artifacts:
     paths:
       - target/
 
-# Job test avec rapport JUnit
+# =========================
+# 🧪 TEST
+# =========================
 test:
   stage: test
   image: maven:3.9.6-eclipse-temurin-17
   script:
     - mvn $MAVEN_CLI_OPTS test
-  allow_failure: true        
+  allow_failure: true
   artifacts:
     when: always
     reports:
@@ -47,7 +49,22 @@ test:
     paths:
       - target/surefire-reports
 
-# Job package
+# =========================
+# 🔐 SNYK SAST
+# =========================
+snyk_scan:
+  stage: security-sast
+  image:
+    name: snyk/snyk:maven
+    entrypoint: [""]
+  script:
+    - snyk auth "$SNYK_TOKEN"
+    - snyk test --severity-threshold=low
+  allow_failure: true
+
+# =========================
+# 📦 PACKAGE
+# =========================
 package:
   stage: package
   image: maven:3.9.6-eclipse-temurin-17
@@ -57,13 +74,13 @@ package:
     paths:
       - target/demo-0.0.1-SNAPSHOT.war
 
-# Job deploy sur Tomcat
+# =========================
+# 🚀 DEPLOY
+# =========================
 deploy:
   stage: deploy
   image: curlimages/curl:latest
   script:
-    - echo "Déploiement du WAR sur Tomcat via ngrok..."
+    - echo "Déploiement du WAR sur Tomcat..."
     - curl -u "$TOMCAT_USER:$TOMCAT_PASS" -T target/demo-0.0.1-SNAPSHOT.war "https://unswabbed-brenton-unregained.ngrok-free.dev/manager/text/deploy?path=/demo&update=true"
   allow_failure: false
-  after_script:
-    - echo "Déploiement terminé"
